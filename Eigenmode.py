@@ -35,11 +35,21 @@ class Eigenmode:
 
 
 if __name__=='__main__':
-
-    E = Eigenmode('/home/elwood/Documents/Inversion/DATA/02_GYRE_omega_zero/pulse_M3.1874_Xc0.620927/mode_-00032_001_+00')
+    from calculus import differentiate
+    E = Eigenmode('/home/elwood/Documents/Inversion/gyre_work/rot_test/m=1/none/mode_-00032_001_+01')
     print(E.l, E.m, E.n_pg, E.beta)
-    plt.plot(E.r_coord, E.kernel)
+
+    #diff = differentiate(E.r_coord, E.xi_h, E.r_coord)
+
+    plt.plot(E.r_coord, E.kernel, '.-')
+    #plt.plot(E.r_coord, diff)
     plt.show()
+
+
+
+
+
+
 
 
 

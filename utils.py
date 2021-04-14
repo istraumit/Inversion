@@ -1,4 +1,5 @@
 import subprocess as sp
+import numpy as np
 
 day = 24 * 60 * 60
 
@@ -14,3 +15,8 @@ def run(cmd):
     except sp.CalledProcessError as err:
         print(err.output)
 
+def condi_num(K):
+    svd = np.linalg.svd(K)
+    S = svd[1]
+    condi = max(S)/min(S)
+    return condi

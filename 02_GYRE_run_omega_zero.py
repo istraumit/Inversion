@@ -30,7 +30,7 @@ for model in models:
 
     run('./gyre ' + template)
 
-    out_run_dir = os.path.join(out_dir, model[:-5])
+    out_run_dir = os.path.join(out_dir, model[6:-5])
     run('mkdir ' + out_run_dir)
     run('mv mode_* ' + out_run_dir)
     run('mv summary.txt ' + out_run_dir)
