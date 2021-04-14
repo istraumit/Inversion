@@ -20,6 +20,20 @@ def get_history_value(param_name):
     v = data[-1,ind]
     return v
 
+def run_MESA(mass, Xc, name_prefix):
+    subst['initial_mass'] = mass
+    subst['xa_central_lower_limit(1)'] = Xc
+
+    prep_inlist(template, 'inlist_project', subst)
+    
+    #run('./rn')
+
+    pulse_name = 'pulse_' + prefix + '.mesa'
+    history_name = 'history_' + prefix + '.data'
+
+    run('cp pulse.mesa ' + os.path.join(out_dir, pulse_name))
+    run('cp LOGS/history.data ' + os.path.join(out_dir, history_name))
+
 
 opt = parse_conf()
 
@@ -38,25 +52,17 @@ N_grid = int(opt['MESA_N_samples'])
 mass_distr = [float(x) for x in opt['MESA_mass_distr']]
 Xc_distr = [float(x) for x in opt['MESA_Xc_distr']]
 
+mass = '%.4f'%(mass_distr[0])
+Xc = '%.5f'%(Xc_distr[0])
+prefix = opt['best_model']
+run_MESA(mass, Xc, prefix)
+print('MESA run complete for the best model')
+
 for i in range(N_grid):
     mass = '%.4f'%(mass_distr[0] + np.random.randn() * mass_distr[1])
     Xc = '%.5f'%(Xc_distr[0] + np.random.randn() * Xc_distr[1])
-
-    subst['initial_mass'] = mass
-    subst['xa_central_lower_limit(1)'] = Xc
-
-    prep_inlist(template, 'inlist_project', subst)
-    
-    #run('./rn')
-        
     prefix = 'M'+mass+'_Xc'+Xc
-
-    pulse_name = 'pulse_' + prefix + '.mesa'
-    history_name = 'history_' + prefix + '.data'
-
-    run('cp pulse.mesa ' + os.path.join(out_dir, pulse_name))
-    run('cp LOGS/history.data ' + os.path.join(out_dir, history_name))
-
+    run_MESA(mass, Xc, prefix)
     print('MESA run complete for M =', mass, '  Xc =', Xc)
 
 
