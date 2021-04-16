@@ -1,5 +1,4 @@
 import subprocess as sp
-import numpy as np
 import pickle
 
 day = 24 * 60 * 60
@@ -25,8 +24,3 @@ def load_pickle(path):
         obj = pickle.load(f)
     return obj
 
-def condi_num(K):
-    svd = np.linalg.svd(K)
-    S = svd[1]
-    condi = max(S)/min(S)
-    return condi
