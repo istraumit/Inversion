@@ -60,7 +60,7 @@ def load_triplets():
             t.units = 'c/d'
             triplets[order] = t
 
-    return triplets
+    return triplets, jordan_freq, jordan_cov
 
 
 
