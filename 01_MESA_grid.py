@@ -26,7 +26,7 @@ def run_MESA(mass, Xc, name_prefix):
 
     prep_inlist(template, 'inlist_project', subst)
     
-    #run('./rn')
+    run('./rn')
 
     pulse_name = 'pulse_' + prefix + '.mesa'
     history_name = 'history_' + prefix + '.data'

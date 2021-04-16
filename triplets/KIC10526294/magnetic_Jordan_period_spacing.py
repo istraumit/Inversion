@@ -22,16 +22,32 @@ for i,order1 in enumerate(orders):
 
 print(F)
 
-im=plt.imshow(FCOV, interpolation=None, origin='lower')
-plt.title('Frequency covariance')
-plt.colorbar(im)
-plt.show()
+if bool(0):
+    im=plt.imshow(FCOV, interpolation=None, origin='lower')
+    plt.title('Frequency covariance')
+    plt.colorbar(im)
+    plt.show()
 
 pairs = []
 for i,order in enumerate(orders):
     if order-1 in orders: pairs.append((i-1,i))
 
-PSP,PCOV = get_P_spacings_with_covariance(F, FCOV, pairs, N_MC_samples=100)
+PSP,PCOV = get_P_spacings_with_covariance(F, FCOV, pairs)
+
+L = len(PSP)
+X = np.array([1e-4/sqrt(L) for x in PSP])
+Z = np.zeros((L,L))
+for i in range(L): Z[i,i] = PCOV[i,i]
+
+S = np.linalg.inv(PCOV)
+d1 = sqrt((S.dot(X)).dot(X))
+print('%.2e'%d1)
+ZINV = np.linalg.inv(Z)
+d2 = sqrt((ZINV.dot(X)).dot(X))
+print('%.2e'%d2)
+print(d1/d2)
+exit()
+
 print(day*PSP)
 
 im=plt.imshow(PCOV, interpolation=None, origin='lower')

@@ -6,6 +6,7 @@ from Eigenmode import Eigenmode
 from calculus import integrate
 from utils import condi_num
 import pickle
+import matplotlib.pyplot as plt
 
 
 opt = parse_conf()
@@ -23,7 +24,6 @@ omega_zero_dir = os.path.join(data_dir, opt['GYRE_stage_dir_omega_zero'])
 core_boundary = float(opt['core_boundary'])
 
 U,M = {},{}
-#N_zones_max = 2 # TEST
 for N_zones in range(1, N_zones_max+1):
     U[N_zones] = {}
     M[N_zones] = {}
@@ -44,10 +44,15 @@ for N_zones in range(1, N_zones_max+1):
 
             for zi in range(N_zones):
                 if not zi in U[N_zones][order]: U[N_zones][order][zi] = []
-                I = eigenmode.beta * integrate(eigenmode.r_coord, eigenmode.kernel, zones[zi], zones[zi+1])
+                I =  integrate(eigenmode.r_coord, eigenmode.kernel, zones[zi], zones[zi+1])
+                if N_zones==1 and I<0.999:
+                    print('WARNING!', zones[zi], zones[zi+1], I)
+                    plt.plot(eigenmode.r_coord, eigenmode.kernel)
+                    plt.show()
+                I *= eigenmode.beta
                 U[N_zones][order][zi].append(I)
                 if model_dir == opt['best_model']: M[N_zones][order][zi] = I
-
+        #print(N_zones, model_dir)
 
 UA = {}
 for N_zones in U:
@@ -64,7 +69,7 @@ for N_zones in U:
 with open(os.path.join(out_dir, 'model'), 'wb') as f:
     pickle.dump(M, f)
 with open(os.path.join(out_dir, 'uncert'), 'wb') as f:
-    pickle.dump(UA, f)
+    pickle.dump(U, f)
 
-
+print('Done.')
 
