@@ -4,7 +4,6 @@ import numpy as np
 from config import parse_conf
 from Eigenmode import Eigenmode
 from calculus import integrate
-from utils import condi_num
 import pickle
 import matplotlib.pyplot as plt
 
@@ -17,7 +16,7 @@ os.makedirs(out_dir, exist_ok=True)
 
 splittings = np.loadtxt(os.path.join(data_dir, opt['splittings_dir'], 'rotational'))
 N_split = splittings.shape[0]
-N_zones_max = N_split - 2
+N_zones_max = N_split
 orders = [int(x) for x in splittings[:,0]]
 
 omega_zero_dir = os.path.join(data_dir, opt['GYRE_stage_dir_omega_zero'])
@@ -52,7 +51,7 @@ for N_zones in range(1, N_zones_max+1):
                 I *= eigenmode.beta
                 U[N_zones][order][zi].append(I)
                 if model_dir == opt['best_model']: M[N_zones][order][zi] = I
-        #print(N_zones, model_dir)
+    print('N_zones =', N_zones, 'complete')
 
 UA = {}
 for N_zones in U:
