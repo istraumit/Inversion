@@ -6,21 +6,22 @@ from config import parse_conf
 from Eigenmode import Eigenmode
 from SVD import *
 
-def expand_fourier(xx, yy, kmin, kmax):
+def expand_fourier(xx, yy, kmax):
     xx_f = 2*np.pi*np.array(xx) - np.pi
     ex = []
-    for k in range(kmin, kmin+kmax):
+    for k in range(1, kmax):
         s = np.sin(k*xx_f)
         c = np.cos(k*xx_f)
         ex.append(simps(s*yy, xx))
         ex.append(simps(c*yy, xx))
     return ex
 
-def inverse_fourier(coef, kmin, kmax):
-    xx_f = np.linspace(-np.pi, np.pi, 1000)
+N_inv_points = 1000
+def inverse_fourier(coef, kmax):
+    xx_f = np.linspace(-np.pi, np.pi, N_inv_points)
     inv = 0.0*xx_f
     i = 0
-    for k in range(kmin, kmin+kmax):
+    for k in range(1, kmax):
         s = np.sin(k*xx_f)
         c = np.cos(k*xx_f)
         inv += coef[i]*s
@@ -36,6 +37,8 @@ out_dir = os.path.join(data_dir, stage_dir)
 os.makedirs(out_dir, exist_ok=True)
 
 splittings = np.loadtxt(os.path.join(data_dir, opt['splittings_dir'], 'rotational'))
+splittings_cov = np.load(os.path.join(data_dir, opt['splittings_dir'], 'rotational_covariance.npy'))
+
 N_split = splittings.shape[0]
 N_zones_max = N_split
 orders = [int(x) for x in splittings[:,0]]
@@ -46,8 +49,9 @@ core_boundary = float(opt['core_boundary'])
 models = os.listdir(omega_zero_dir)
 models.sort()
 
-kmin = int(sys.argv[1])
+xx_rec = np.linspace(0,1,N_inv_points)
 
+kmax = 100
 for model_dir in models:
     model_path = os.path.join(omega_zero_dir, model_dir)
     kernels = {}
@@ -62,16 +66,21 @@ for model_dir in models:
 
     K = []
     for order in orders:
-        K.append(expand_fourier(rr, kernels[order], kmin, 6))
-
+        K.append(expand_fourier(rr, kernels[order], kmax))
     K = np.array(K)
-    print(np.linalg.svd(K)[1])
-    QT = truncated_SVD(K, 2)
-    X = np.dot(QT, splittings[:,1])
-    REC = inverse_fourier(X, kmin, 6)
-    plt.plot(REC)
-    plt.show()
-    break
+    print(np.linalg.cond(K))
+
+    for mc in range(1):
+        split = np.random.multivariate_normal(splittings[:,1], splittings_cov)
+        X,res,rank,sv = np.linalg.lstsq(K, split, rcond=0.01)
+        print(rank)
+        REC = inverse_fourier(X, kmax)
+        plt.plot(xx_rec, REC, color='blue', alpha=0.25)
+
+plt.xlabel('r/R_star')
+plt.ylabel('Omega [nHz]')
+plt.grid()
+plt.show()
 
 
 

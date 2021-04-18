@@ -19,7 +19,7 @@ model = load_pickle(os.path.join(rot_int_path, 'model'))
 uncert = load_pickle(os.path.join(rot_int_path, 'uncert'))
 
 
-N_zones = 11
+N_zones = 1
 
 orders = list(model[N_zones].keys())
 orders.sort()
@@ -54,7 +54,7 @@ def get_CHI2(Omega, model_index):
 
 Om_test = 60.0*np.ones((N_zones,))
 
-print(get_CHI2(Om_test, 3))
+print(get_CHI2(Om_test, 0))
 
 
 
