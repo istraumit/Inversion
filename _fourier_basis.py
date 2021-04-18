@@ -7,7 +7,7 @@ from Eigenmode import Eigenmode
 from SVD import *
 
 def expand_fourier(xx, yy, kmax):
-    xx_f = 2*np.pi*np.array(xx) - np.pi
+    xx_f = 2*np.pi*np.array(xx)
     ex = []
     for k in range(1, kmax):
         s = np.sin(k*xx_f)
@@ -18,7 +18,7 @@ def expand_fourier(xx, yy, kmax):
 
 N_inv_points = 1000
 def inverse_fourier(coef, kmax):
-    xx_f = np.linspace(-np.pi, np.pi, N_inv_points)
+    xx_f = np.linspace(0, 2*np.pi, N_inv_points)
     inv = 0.0*xx_f
     i = 0
     for k in range(1, kmax):
