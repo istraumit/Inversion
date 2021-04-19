@@ -30,6 +30,9 @@ def inverse_fourier(coef, kmax):
         i += 1
     return inv
 
+def test_Omega(rr):
+    return 100*np.sin(2*np.pi*rr)
+
 opt = parse_conf()
 data_dir = opt['DATA_dir']
 stage_dir = opt['rotation_integrals_dir']
@@ -48,6 +51,23 @@ omega_zero_dir = os.path.join(data_dir, opt['GYRE_stage_dir_omega_zero'])
 core_boundary = float(opt['core_boundary'])
 models = os.listdir(omega_zero_dir)
 models.sort()
+
+#------------------------
+
+model_path = os.path.join(omega_zero_dir, models[0])
+kernels = {}
+for eigen_fn in os.listdir(model_path):
+    if not eigen_fn.startswith('mode'): continue
+    path = os.path.join(model_path, eigen_fn)
+    eigenmode = Eigenmode(path)
+    order = eigenmode.n_pg
+    if not order in orders: continue
+    kernels[order] = eigenmode.beta * eigenmode.kernel
+    rr = eigenmode.r_coord
+
+test_split = np.array([simps(test_Omega(rr)*kernels[o], rr) for o in orders])
+print(test_split)
+#------------------------
 
 xx_rec = np.linspace(0,1,N_inv_points)
 
@@ -71,7 +91,7 @@ for model_dir in models:
     print(np.linalg.cond(K))
 
     for mc in range(1):
-        split = np.random.multivariate_normal(splittings[:,1], splittings_cov)
+        split = np.array([1.0 for x in test_split]) #np.random.multivariate_normal(splittings[:,1], splittings_cov)
         X,res,rank,sv = np.linalg.lstsq(K, split, rcond=0.01)
         print(rank)
         REC = inverse_fourier(X, kmax)
