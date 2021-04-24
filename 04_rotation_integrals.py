@@ -23,7 +23,7 @@ omega_zero_dir = os.path.join(data_dir, opt['GYRE_stage_dir_omega_zero'])
 core_boundary = float(opt['core_boundary'])
 
 U,M = {},{}
-for N_zones in range(1, N_zones_max+1):
+for N_zones in range(100, 1001, 100):
     U[N_zones] = {}
     M[N_zones] = {}
     zones = np.linspace(core_boundary, 0.9999, N_zones+1)
@@ -64,6 +64,8 @@ for N_zones in U:
         for j,zi in enumerate(zis):
             UA[N_zones][order][zi] = np.std(U[N_zones][order][zi])
             K[i,j] = M[N_zones][order][zi]
+    print(N_zones, np.linalg.cond(K))
+
 
 with open(os.path.join(out_dir, 'model'), 'wb') as f:
     pickle.dump(M, f)

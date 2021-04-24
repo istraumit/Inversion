@@ -27,6 +27,8 @@ omega_zero_dir = os.path.join(data_dir, opt['GYRE_stage_dir_omega_zero'])
 core_boundary = float(opt['core_boundary'])
 models = os.listdir(omega_zero_dir)
 
+split = [np.random.rand() for x in splittings[:,1]] #+ np.random.randn()*splittings[:,2]
+
 def get_solution(kernels, rr):
     K = np.zeros((len(orders), len(orders)))
     for i,o1 in enumerate(orders):
@@ -34,14 +36,11 @@ def get_solution(kernels, rr):
             kern_prod = kernels[o1] * kernels[o2]
             K[i,j] = simps(kern_prod, rr)
 
-    W,V = np.linalg.eig(K)
-    print(W)
-    plt.imshow(V)
-    plt.show()
+    print(K)
+    input()
 
-    QT = truncated_SVD(K, int(sys.argv[1]))
-    split = splittings[:,1] + np.random.randn()*splittings[:,2]
-    X = np.dot(QT, split)
+    print(np.linalg.cond(K))
+    X,res,rank,sv = np.linalg.lstsq(K, split, rcond=0.01)
     REC = np.zeros((len(rr)))
     for i,o in enumerate(orders):
         REC += X[i]*kernels[o]

@@ -12,8 +12,8 @@ def expand_fourier(xx, yy, kmax):
     for k in range(1, kmax):
         s = np.sin(k*xx_f)
         c = np.cos(k*xx_f)
-        ex.append(simps(s*yy, xx))
-        ex.append(simps(c*yy, xx))
+        ex.append(np.sum(s*yy))
+        ex.append(np.sum(c*yy))
     return ex
 
 N_inv_points = 1000
@@ -91,7 +91,7 @@ for model_dir in models:
     print(np.linalg.cond(K))
 
     for mc in range(1):
-        split = np.array([1.0 for x in test_split]) #np.random.multivariate_normal(splittings[:,1], splittings_cov)
+        split = splittings[:,1] #np.random.multivariate_normal(splittings[:,1], splittings_cov)
         X,res,rank,sv = np.linalg.lstsq(K, split, rcond=0.01)
         print(rank)
         REC = inverse_fourier(X, kmax)
