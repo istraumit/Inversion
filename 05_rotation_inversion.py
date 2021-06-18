@@ -27,6 +27,8 @@ def get_cov(N, L):
                 buf[d] = cov[i,j]
     return cov
 
+def noop(f, a):
+    return f
 
 opt = parse_conf()
 data_dir = opt['DATA_dir']
@@ -64,6 +66,7 @@ Xg1 = X + 60*NULLsum
 Xg2 = X - 100*NULLsum
 
 gf = gaussian_filter1d
+#gf = noop
 gfsig = 10
 
 i_start = 20

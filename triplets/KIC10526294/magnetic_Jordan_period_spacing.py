@@ -5,7 +5,7 @@ from triplets import load_triplets
 from P_spacings_covariance import get_P_spacings_with_covariance
 
 day = 24 * 60 * 60
-jordan = load_triplets()
+jordan,_,_ = load_triplets()
 COV = np.load('Jordan_covar_2.npz')['cov']
 
 orders = list(jordan.keys())
@@ -22,11 +22,12 @@ for i,order1 in enumerate(orders):
 
 print(F)
 
-if bool(0):
+if bool(1):
     im=plt.imshow(FCOV, interpolation=None, origin='lower')
     plt.title('Frequency covariance')
     plt.colorbar(im)
     plt.show()
+    exit()
 
 pairs = []
 for i,order in enumerate(orders):

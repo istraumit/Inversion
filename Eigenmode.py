@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import simps
+from scipy.interpolate import interp1d
+
 
 class Eigenmode:
 
@@ -19,6 +21,11 @@ class Eigenmode:
 
         data = np.loadtxt(fn, skiprows=6)
         xiR, xiH, rho, r = data[:,0], data[:,2], data[:,4], data[:,5]
+        r_new = np.linspace(min(r), max(r), 10000)
+        xiR = self.interpolate(r, xiR, r_new)
+        xiH = self.interpolate(r, xiH, r_new)
+        rho = self.interpolate(r, rho, r_new)
+        r = r_new
 
         L2 = self.l*(self.l + 1)
         R = (xiR**2 + L2 * xiH**2 - 2*xiR*xiH - xiH**2) * r**2 * rho
@@ -33,6 +40,10 @@ class Eigenmode:
         self.xi_h = xiH
         self.rho = rho
 
+    def interpolate(self, xx, ff, xx_new):
+        interp = interp1d(xx, ff, kind='cubic')
+        kern = interp(xx_new)
+        return kern
 
 if __name__=='__main__':
     from calculus import differentiate

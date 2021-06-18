@@ -3,65 +3,61 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import simps
-
-def expand_fourier(xx, yy, kmax):
-    xx_f = 2*np.pi*np.array(xx)
-    ex = []
-    for k in range(1, kmax):
-        s = np.sin(k*xx_f)
-        c = np.cos(k*xx_f)
-        ex.append(simps(s*yy, xx))
-        ex.append(simps(c*yy, xx))
-    return ex
-
-N_inv_points = 1000
-def inverse_fourier(coef, kmax):
-    xx_f = np.linspace(0, 2*np.pi, N_inv_points)
-    inv = 0.0*xx_f
-    i = 0
-    for k in range(1, kmax):
-        s = np.sin(k*xx_f)
-        c = np.cos(k*xx_f)
-        inv += coef[i]*s
-        i += 1
-        inv += coef[i]*c
-        i += 1
-    return inv
-
-def test_Omega(rr):
-    return 100*np.sin(2*np.pi*rr)
+from calculus import integrate
 
 def gaussian(xx, mu, sigma):
     return np.exp(-0.5*((xx-mu)/sigma)**2)/(sigma * math.sqrt(2*math.pi))
 
-def rectang(xx, N, i):
-    return [1.0 if (1/N)*i < x < (1/N)*(i+1) else 0.0  for x in xx]
+def test_Omega(rr):
+    return 100*np.sin(2*np.pi*rr)
 
-N_r = 1000
-rr = np.linspace(0,1,N_r)
+xx = np.linspace(0, 1, 1000)
+basis = [1+0*xx]
+for k in range(1, 7):
+    s = np.sin(2*np.pi*k*xx)
+    c = np.cos(2*np.pi*k*xx)
+    basis.append(s)
+    basis.append(c)
 
-M = 20
-sigma = 0.5/M
-kern_points = np.linspace(0, 1, M)
-kernels = []
-for k in range(M):
-    #kernels.append(gaussian(rr, kern_points[k], sigma))
-    kernels.append(rectang(rr, M, k))
+test_func = gaussian(xx, 0.5, 0.1)
+splits = [np.sum(b*test_func) for b in basis]
 
-J = [simps(test_Omega(rr)*kern, rr) + 0*np.random.randn() for kern in kernels]
-print(J)
+K = np.array(basis)
+rec_1 = np.linalg.lstsq(K, splits, rcond=0.01)
 
-kmax = 51
-K = np.array([expand_fourier(rr, kern, kmax) for kern in kernels])
-print('------------------')
-print(K.shape)
-print(np.linalg.cond(K))
-X,res,rank,sv = np.linalg.lstsq(K, J, rcond=0.01)
-print(rank)
-REC = inverse_fourier(X, kmax)
-plt.plot(rr, REC, color='blue')
-plt.plot(rr, test_Omega(rr))
+N_zones = 5
+K = []
+zones = np.linspace(0.0001, 0.9999, N_zones+1)
+for j,b in enumerate(basis):
+    Z = []
+    for zi in range(N_zones):
+        I =  integrate(xx, b, zones[zi], zones[zi+1])
+        Z.append(I)
+    K.append(Z)
+
+K = np.array(K)
+#plt.plot(K[-1,:])
+#plt.show()
+#exit()
+
+
+rec_2 = np.linalg.lstsq(K, splits, rcond=0.01)
+
+plt.plot(xx, test_func, label='Original')
+plt.plot([0.5*(zones[i]+zones[i+1]) for i,z in enumerate(zones[:-1])], 1e-3*rec_2[0], '.-', label='Inversion')
+#plt.plot(xx, rec_1[0])
+
+plt.legend()
+plt.xlabel('X')
+plt.ylabel('Y')
+
 plt.show()
+
+
+
+
+
+
 
 
 
