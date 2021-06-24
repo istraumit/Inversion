@@ -5,6 +5,13 @@ from triplets import load_triplets
 from P_spacings_covariance import get_P_spacings_with_covariance
 
 day = 24 * 60 * 60
+
+def cd_to_Hz(cd):
+    return cd / day
+
+def cd_to_uHz(f):
+    return 1.e6*cd_to_Hz(f)
+
 jordan,_,_ = load_triplets()
 COV = np.load('Jordan_covar_2.npz')['cov']
 
@@ -16,11 +23,20 @@ F = np.zeros((N,))
 FCOV = np.zeros((N,N))
 
 for i,order1 in enumerate(orders):
-    F[i] = jordan[order1].freq[1]
+    F[i] = cd_to_uHz(jordan[order1].freq[1])
     for j,order2 in enumerate(orders):
-        FCOV[i,j] = COV[jordan[order1].idx[1], jordan[order2].idx[1]]
+        sig2 = COV[jordan[order1].idx[1], jordan[order2].idx[1]]
+        FCOV[i,j] =  sig2 * cd_to_uHz(1.0)**2
 
+print(orders)
 print(F)
+
+with open('Jordan_freq.data', 'w') as f:
+    for i,order in enumerate(orders):
+        s = '%i %.8f\n'%(order, F[i])
+        f.write(s)
+
+np.savetxt('Jordan_cov.data', FCOV)
 
 if bool(1):
     im=plt.imshow(FCOV, interpolation=None, origin='lower')
