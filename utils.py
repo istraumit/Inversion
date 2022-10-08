@@ -1,5 +1,6 @@
 import subprocess as sp
 import pickle
+import sys
 
 day = 24 * 60 * 60
 
@@ -24,3 +25,7 @@ def load_pickle(path):
         obj = pickle.load(f)
     return obj
 
+if __name__=='__main__':
+    cd = float(sys.argv[1])
+    nHz = cd_to_nHz(cd)
+    print(cd, 'c/d =', nHz, 'nHz')

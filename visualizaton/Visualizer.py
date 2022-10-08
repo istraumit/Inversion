@@ -87,11 +87,13 @@ class Visualizer:
             #S3[S3<0]=0
         
         plt.subplot(221)
+
+        bar_lbl = 'Likelihood'
         
         img_inter = 'none'
         im = plt.imshow(S1.T, aspect='auto',  interpolation=img_inter, origin='lower', extent=get_extent(ax2, ax3))
         bar = plt.colorbar(im, aspect=20, shrink=1)
-        bar.set_label('Probability density')
+        bar.set_label(bar_lbl)
         plt.locator_params(nbins=5)
         plt.xlabel(P.axis_labels[1])
         plt.ylabel(P.axis_labels[2])
@@ -100,7 +102,7 @@ class Visualizer:
         
         im = plt.imshow(S2.T, aspect='auto',  interpolation=img_inter, origin='lower', extent=get_extent(ax1, ax3))
         bar = plt.colorbar(im, aspect=20, shrink=1)
-        bar.set_label('Probability density')
+        bar.set_label(bar_lbl)
         plt.locator_params(nbins=5)
         plt.xlabel(P.axis_labels[0])
         plt.ylabel(P.axis_labels[2])
@@ -109,7 +111,7 @@ class Visualizer:
         
         im = plt.imshow(S3.T, aspect='auto',  interpolation=img_inter, origin='lower', extent=get_extent(ax1, ax2))
         bar = plt.colorbar(im, aspect=20, shrink=1)
-        bar.set_label('Probability density')
+        bar.set_label(bar_lbl)
         plt.locator_params(nbins=5)
         plt.xlabel(P.axis_labels[0])
         plt.ylabel(P.axis_labels[1])
@@ -133,10 +135,10 @@ class Visualizer:
             perc_values = Estimator.get_percentiles(CDF[i], perc_points)
         
             plt.subplot(221+i)
-            plt.plot(CDF[i][0], CDF[i][1])
+            plt.plot(CDF[i][0], CDF[i][1], linewidth=2)
             
-            for y in perc_points: plt.axhline(0.01*y)
-            for x in perc_values: plt.axvline(x)
+            for y in perc_points: plt.axhline(0.01*y, linestyle='--')
+            for x in perc_values: plt.axvline(x, linestyle='--')
             
             plt.xlabel(self.est.cube.axis_labels[i])
             

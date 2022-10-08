@@ -4,9 +4,7 @@ import matplotlib.pyplot as plt
 from config import parse_conf
 from Eigenmode import Eigenmode
 from scipy.integrate import simps
-from scipy.interpolate import interp1d
 
-opt = parse_conf()
 
 def gaussian(xx, mu, sigma):
     return np.exp(-0.5*((xx-mu)/sigma)**2)/(sigma * np.sqrt(2*np.pi))
@@ -16,21 +14,18 @@ def rect(xx, x0, x1, v):
     return np.array(y)
 
 def get_rot_basis():
+    opt = parse_conf()
     data_dir = opt['DATA_dir']
     omega_zero_dir = os.path.join(data_dir, opt['GYRE_stage_dir_omega_zero'])
     model_path = os.path.join(omega_zero_dir, 'MODEL')
-    basis = {}
+    basis = []
     for eigen_fn in os.listdir(model_path):
         if not eigen_fn.startswith('mode'): continue
         path = os.path.join(model_path, eigen_fn)
         eigenmode = Eigenmode(path)
-        order = eigenmode.n_pg
+        basis.append(eigenmode.kernel)
         rr = eigenmode.r_coord
-        basis[order] = eigenmode.beta * eigenmode.kernel
-    orders = list(basis.keys())
-    orders.sort()
-    basis_arr = [basis[o] for o in orders]
-    return np.array(basis_arr), rr
+    return np.array(basis), rr
 
 def get_Fourier_basis():
     xx_f = np.linspace(0, 1, 1000)
@@ -48,12 +43,10 @@ def plot_matrix(M):
     plt.show()
 
 K, rr = get_rot_basis()
-
-
 #K, rr = get_Fourier_basis()
 M = K.shape[0]
 E = np.identity(M+1)
-mu = 0.0
+mu = 10
 A = np.zeros((M+1, M+1))
 
 for i in range(M):
@@ -65,36 +58,36 @@ for i in range(M):
     A[M,i] = A[i,M]
 
 A = A + mu*E
-
-data_dir = opt['DATA_dir']
-splittings = np.loadtxt(os.path.join(data_dir, opt['splittings_dir'], 'mock_rot'))[:,1]
-
-Oms = []
+#T = rect(rr, 0.4, 0.5, 10.0)
 x_center_grid = np.linspace(0.1, 0.9, 9)
-for x_center in x_center_grid:
-    T = gaussian(rr, x_center, 0.01)
+#sigma_grid = np.linspace(0.001, 0.1, 100)
+#qq = []
+#for x_center in x_center_grid:
+#for sigma in sigma_grid:
+for xc in x_center_grid:
+    T = gaussian(rr, xc, 0.05)
 
     v = np.zeros((M+1,))
     for i in range(M):
         v[i] = simps(K[i]*T, rr)
     v[M] = 1
 
+    print('cond =', np.linalg.cond(A))
+
     c = np.linalg.solve(A, v)
 
-    Om = splittings.dot(c[:-1])
+    H = (K.T).dot(c[:-1])
+    quality = simps(np.abs(H-T), rr)
 
-    Oms.append(Om)
+    #print('approx quality metrix = %.2e'%quality)
+    print('xc =', xc)
 
-plt.plot(x_center_grid, Oms, 'o-')
-plt.show()
-exit()
-
-plt.plot(rr, H, label='Averaging kernel')
-plt.plot(rr, T, label='Target')
-plt.legend()
-plt.xlabel('r/R')
-plt.ylabel('Target function')
-plt.show()
+    plt.plot(rr, H, label='Averaging kernel')
+    plt.plot(rr, T, label='Target')
+    plt.legend()
+    plt.xlabel('r/R')
+    plt.ylabel('Target function')
+    plt.show()
 
 
 
