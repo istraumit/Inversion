@@ -9,6 +9,8 @@ def exp_distr(xx, lam):
 
 def add_noise(path, noise):
     path_out = path + '.noise'
+    tmpl = '0.0000000000000000E+000'
+    remove_end = 2*(len(tmpl) + 3)
     with open(path) as f_in:
         with open(path_out, 'w') as f_out:
             n=0
@@ -20,11 +22,16 @@ def add_noise(path, noise):
                     arr = line.split()
                     freq = float(arr[7])
                     freq_noisy = freq + np.random.randn()*noise[n]
-                    new_line = line.rstrip() + '  ' + '%.16e'%freq_noisy + '\n'
+                    new_line = line.rstrip()[:-remove_end] + '   ' + '%.16e'%freq_noisy + '   '+tmpl+'\n'
                     f_out.write(new_line)
 
+day = 24 * 60 * 60
 
-err = np.loadtxt('Kurtz_2014_g_mode_errors_cyc_day')
+def cd_to_Hz(cd):
+    return cd / day
+
+
+err = cd_to_Hz(np.loadtxt('Kurtz_2014_g_mode_errors_cyc_day'))
 mean = np.mean(err)
 lam = 1./mean
 
@@ -48,9 +55,9 @@ plt.show()
 
 d = sys.argv[1]
 for fn in os.listdir(d):
-    if fn.endswith('.noise'): continue
-    path = os.path.join(d, fn)
-    add_noise(path, sample)
+    if fn.endswith('.const'):
+        path = os.path.join(d, fn)
+        add_noise(path, expon.rvs(size=1000, scale=mean))
 
 
 
