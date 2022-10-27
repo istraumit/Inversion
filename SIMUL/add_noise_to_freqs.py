@@ -25,39 +25,37 @@ def add_noise(path, noise):
                     new_line = line.rstrip()[:-remove_end] + '   ' + '%.16e'%freq_noisy + '   '+tmpl+'\n'
                     f_out.write(new_line)
 
-day = 24 * 60 * 60
+if __name__=='__main__':
 
-def cd_to_Hz(cd):
-    return cd / day
+    day = 24 * 60 * 60
 
+    def cd_to_Hz(cd):
+        return cd / day
 
-err = cd_to_Hz(np.loadtxt('Kurtz_2014_g_mode_errors_cyc_day'))
-mean = np.mean(err)
-lam = 1./mean
+    err = cd_to_Hz(np.loadtxt('Kurtz_2014_g_mode_errors_cyc_day'))
+    mean = np.mean(err)
+    lam = 1./mean
 
+    if False:
+        xx = np.linspace(0, max(err), 100)
+        yy = exp_distr(xx, lam)
 
-xx = np.linspace(0, max(err), 100)
-yy = exp_distr(xx, lam)
+        plt.hist(err, density=True, label='Kurtz et al 2014 data', alpha=0.5)
+        plt.plot(xx, yy, linewidth=2, label='Exp distribution')
+        plt.xlabel('Error [cyc/day]')
+        plt.legend()
+        plt.show()
 
-plt.hist(err, density=True, label='Kurtz et al 2014 data', alpha=0.5)
-plt.plot(xx, yy, linewidth=2, label='Exp distribution')
-plt.xlabel('Error [cyc/day]')
-plt.legend()
-plt.show()
+        sample = expon.rvs(size=1000, scale=mean)
+        plt.hist(sample, 50, density=True, alpha=0.5, label='Random sample')
+        plt.plot(xx, yy, linewidth=2, label='Exp distribution')
+        plt.legend()
+        plt.xlabel('Error [cyc/day]')
+        plt.xlim(0, xx[-1])
+        plt.show()
 
-sample = expon.rvs(size=1000, scale=mean)
-plt.hist(sample, 50, density=True, alpha=0.5, label='Random sample')
-plt.plot(xx, yy, linewidth=2, label='Exp distribution')
-plt.legend()
-plt.xlabel('Error [cyc/day]')
-plt.xlim(0, xx[-1])
-plt.show()
-
-d = sys.argv[1]
-for fn in os.listdir(d):
-    if fn.endswith('.const'):
-        path = os.path.join(d, fn)
-        add_noise(path, expon.rvs(size=1000, scale=mean))
+    path = sys.argv[1]
+    add_noise(path, expon.rvs(size=1000, scale=mean))
 
 
 

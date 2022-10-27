@@ -4,6 +4,7 @@ from scipy.integrate import simps
 from scipy.interpolate import interp1d
 import h5py
 import subprocess as sp
+from scipy.optimize import brentq
 
 
 
@@ -58,10 +59,10 @@ def load_Brunt_Vaisala_from_pulse(path):
     NN = np.sqrt(np.array(NN))
     return rr, NN
 
-eval_lambda_path = '/home/elwood/Soft/gyre/6.0/bin/eval_lambda'
-tmp_h5 = 'TMP_LAMBDA_EVAL.H5'
 def tidal_eigenvalue_lambda_single(q, l, m):
-    assert abs(q)<1000.,"spin factor is too large"
+    eval_lambda_path = '/home/elwood/Soft/gyre/6.0/bin/eval_lambda'
+    tmp_h5 = 'TMP_LAMBDA_EVAL.H5'
+    assert abs(q)<1.e3,"spin factor is too large"
     params = [l, m, q, q, 1, 'F', 'F', tmp_h5]
     par = ' '.join([str(p) for p in params])
     o = sp.check_output(eval_lambda_path + ' ' + par, shell=True, stderr=sp.STDOUT)
@@ -82,7 +83,6 @@ def compute_alpha_g(r_norm, N, f_in, f_rot, l, m, n):
     I = simps(F, r_norm)
 
     a_g = I/(2*np.pi**2) - n
-
     return a_g
 
 
@@ -116,16 +116,24 @@ def get_f_rot_Newton(r_norm, N, f_rot_start, f_in, l, m, n, alpha_g):
     max_iter = 100
     while True:
         f0, deriv = dfdx(opt, x0)
-        #print('x0 =', x0, ', deriv =', deriv)
         x1 = x0 - f0/deriv
-        if abs(x0-x1)<1.e-16:
-            #print(abs(x0-x1))
-            return x1
+        if abs(x0-x1)<1.e-16: return x1
         x0 = x1
         i += 1
         if i>max_iter: raise Exception('Max iterations exceeded')
-        #print('x1 =', x1)
 
+def find_roots_Brent(F, xx):
+    yy = [F(x) for x in xx]
+    roots = [brentq(F, xx[i-1], xx[i]) for i in range(1, len(xx)) if yy[i-1]*yy[i] < 0]
+    return roots
+
+def get_f_rot_Brent(r_norm, N, f_rot_grid, f_in, l, m, n, alpha_g):
+
+    def opt(x):
+        return compute_alpha_g(r_norm, N, f_in, x, l, m, n) - alpha_g
+
+    f_rot = find_roots_Brent(opt, f_rot_grid)
+    return f_rot
 
 def load_gyre_summary(sum_path):
     data_sum = np.loadtxt(sum_path, skiprows=6)

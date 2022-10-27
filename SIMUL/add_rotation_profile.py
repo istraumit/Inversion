@@ -8,6 +8,9 @@ from numpy.polynomial.chebyshev import chebval
 def nHz_to_rads(omega):
     return 2 * pi * 1.e-9 * omega
 
+def uHz_to_rads(omega):
+    return 2 * pi * 1.e-6 * omega
+
 def step_profile(r_norm):
     rr = [0.0, 0.1345, 1.0]
     prof = [1000., 250., 250.]
@@ -22,7 +25,7 @@ def sin_profile(rr):
     return nHz_to_rads( 1000.0 + 1000.0 * np.sin(2 * pi * rr) )
 
 def const_profile(r_norm):
-    return nHz_to_rads(1000)
+    return uHz_to_rads(const_rotation_value)
 
 
 Cheb_x = np.linspace(-1, 1, 1000)
@@ -84,7 +87,10 @@ if __name__=='__main__':
     path = sys.argv[1]
     postfix = sys.argv[2]
 
-    add_rotation_to_pulse_file(path, postfix, D[postfix])
+    if postfix=='const':
+        const_rotation_value = float(sys.argv[3])
+
+    add_rotation_to_pulse_file(path, postfix+'.'+sys.argv[3], D[postfix])
 
 
 
