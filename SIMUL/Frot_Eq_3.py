@@ -41,10 +41,8 @@ def plot_alpha_g(model, lmn, ag_func):
     fig.add_lines('v', [10.0], style='--', color='black')
     fig.add_lines('h', [0.0], style='-', color='black')
 
-    if save:
-        fig.dump('figures/roots/'+model+'_'+ str(lmn) +'.fig')
-    else:
-        fig.show()
+    fig.dump('figures/roots/'+model+'_'+ str(lmn) +'.fig')
+    fig.show()
 
 class Model:
     def __init__(self, M, XC, rot):
@@ -52,6 +50,7 @@ class Model:
         self.XC = XC
         self.rot = rot
         self.noise = False
+        self.rossby = False
 
     def __str__(self):
         return 'M%sXC%sR%s'%(self.M, self.XC, self.rot)
@@ -67,7 +66,8 @@ class Model:
     def freq_name(self):
         name = 'M' + self.M + '_XC' + self.XC
         if self.rot!=None: name += '.omega.const.' + self.rot
-        name += '.out'
+        if self.rossby: name += '.rossby'
+        else: name += '.out'
         if self.noise: name += '.noise'
         return name
 
@@ -120,7 +120,7 @@ def run(l, mm, true_model, assumed_model, f_rot_grid):
     
 
     FROT = {1:[], -1:[]}
-    nn = [-n for n in range(10, 31)]
+    nn = [-n for n in range(10, 101)]
     agg, Pi0s = [], []
     #plot_freqs(S, nn, l, model)
     
@@ -131,16 +131,18 @@ def run(l, mm, true_model, assumed_model, f_rot_grid):
             if assumed_model.rot == None: m_ag=0
             f_osc = Sassumed[(l,m_ag,n)]
             # find oscillation cavity
-            Pi0 = get_Pi0_precise(rr, NN, f_osc)
+            Pi0 = 0# get_Pi0_precise(rr, NN, f_osc)
             Pi0s.append(Pi0)
             alpha_g = compute_alpha_g(rr, NN, f_osc, assumed_model.get_rot_Hz(), l, m_ag, n)
             agg.append(alpha_g)
-            if alpha_g_plot:
+            if False:
                 plot_alpha_g(assumed_model.freq_name(), lmn, lambda x: compute_alpha_g(rr, NN, Sassumed[lmn], x, l, m, n) - alpha_g)
                 print(lmn, alpha_g)
             try:
-                #f_rot_find = get_f_rot_Newton(rr, NN, fstart, Strue[lmn], l, m, -n, alpha_g)
                 f_rot_roots = get_f_rot_Brent(rr, NN, f_rot_grid[m], Strue[lmn], l, m, -n, alpha_g)
+                if False and len(f_rot_roots)==0:
+                    f_rot_newt = get_f_rot_Newton(rr, NN, 0.0, Strue[lmn], l, m, -n, alpha_g)
+                    f_rot_roots.append(f_rot_newt)
                 f_rot_uHz = [f * uHz for f in f_rot_roots]
                 FROT[m].append(f_rot_uHz)
                 print(n, 'f_in =', Strue[lmn] * uHz, '[uHz], ', 'f_rot_find =', f_rot_uHz, '[uHz]', 'alpha_g =', alpha_g, 'Pi0 =', Pi0)
@@ -189,6 +191,12 @@ def get_f_rot(ll, mm, nn, true_model, assumed_model, f_rot_grid):
                 alpha_g = compute_alpha_g(rr, NN, f_osc, assumed_model.get_rot_Hz(), l, m_ag, n)
 
                 f_rot_roots = get_f_rot_Brent(rr, NN, f_rot_grid[m], Strue[lmn], l, m, -n, alpha_g)
+                if len(f_rot_roots)==0:
+                    try:
+                        f_rot_Newt = get_f_rot_Newton(rr, NN, 0.0, Strue[lmn], l, m, -n, alpha_g)
+                        f_rot_roots.append(f_rot_Newt)
+                    except: pass
+
                 f_rot_uHz = [f * uHz for f in f_rot_roots]
                 FROT[lmn] = f_rot_uHz
     return FROT
@@ -220,14 +228,16 @@ def make_table(nn):
     def format_pcnt(d, f_true):
         a = []
         for k in d:
-            a.append( ' %.3f '%(100* (d[k][0] - f_true)/f_true) )
+            if len(d[k])==0: a.append('N')
+            elif len(d[k])>1: a.append('M')
+            else: a.append( ' %.3f '%(100* (d[k][0] - f_true)/f_true) )
         return ' '.join(a)
 
     f_rot_grid = {}
-    f_rot_grid[-1] = np.linspace(5/uHz, 15/uHz, 75)
+    f_rot_grid[-1] = np.linspace(1/uHz, 31/uHz, 150)
     f_rot_grid[1] = np.linspace(8/uHz, 12/uHz, 10)
 
-    ll,mm = [1,2],[1]
+    ll,mm = [1,2],[-1]
 
     for k in models:
         Mtrue = Model(k[0], k[1], '10')
@@ -235,7 +245,7 @@ def make_table(nn):
             try:
                 frot = get_f_rot(ll, mm, nn, Mtrue, Massumed, f_rot_grid)
                 print(Mtrue, Massumed, format_pcnt(frot, 10.))
-                run(1, mm, Mtrue, Massumed, f_rot_grid)
+                #run(1, mm, Mtrue, Massumed, f_rot_grid)
             except Exception as ex:
                 print(Mtrue, Massumed, ex)
 
@@ -259,21 +269,21 @@ def make_BV_freq_plots():
 
 if __name__=='__main__x':
 
-    #make_table([-30, -20])
-    make_BV_freq_plots()
+    make_table([-30, -20])
+    #make_BV_freq_plots()
 
 
-if __name__=='__main__x':
+if __name__=='__main__':
 
     Mtrue = Model('1.5', '0.2', '10')
-    Mtrue.noise = True
     Massumed = Model('1.515', '0.2', '10')
+    Mtrue.rossby = Massumed.rossby = True
 
     f_rot_grid = {}
-    f_rot_grid[-1] = np.linspace(5/uHz, 15/uHz, 75)
-    f_rot_grid[1] = np.linspace(8/uHz, 12/uHz, 10)
+    f_rot_grid[-1] = np.linspace(1/uHz, 21/uHz, 150)
+    f_rot_grid[1] = np.linspace(9/uHz, 11/uHz, 10)
 
-    run(1, [1], Mtrue, Massumed, f_rot_grid)
+    run(-1, [1], Mtrue, Massumed, f_rot_grid)
 
 
 
